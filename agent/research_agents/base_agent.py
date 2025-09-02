@@ -180,10 +180,10 @@ class BaseResearchAgent:
             web_results = []
             try:
                 search_query = f"{state['topic']} {sector if 'sector' in locals() else ''}"
-                web_results = self.search_tool.invoke(
-                    search_query,
-                    max_results=25
-                )
+                web_results = self.search_tool.invoke({
+                    "query": search_query,
+                    "max_results": 25
+                })
                 print(f"Retrieved {len(web_results)} web search results")
             except Exception as e:
                 print(f"Web search error: {e}")

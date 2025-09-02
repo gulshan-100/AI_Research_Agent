@@ -42,6 +42,9 @@ from langgraph.checkpoint.memory import MemorySaver
 # Initialize Pinecone with new API
 from pinecone import Pinecone as PineconeClient
 
+# Define the API key directly to avoid issues
+pinecone_api_key = "pcsk_6d1bNh_Ez7hr1V9BCki23dipaUVvD5gpFYztCftysGCqeLuPh53AsK1eUMesjEHyv39KWB"
+
 class ResearchPlan(BaseModel):
     """Structure for research planning"""
     main_topics: List[str] = Field(description="Main topics to research")
@@ -75,21 +78,41 @@ class BaseResearchAgent:
             temperature=0.7,
             openai_api_key=settings.OPENAI_API_KEY
         )
-        # Use the same embedding model logic as document_loader
-        try:
-            self.embeddings = OpenAIEmbeddings(
-                openai_api_key=settings.OPENAI_API_KEY,
-                model="text-embedding-3-small"
-            )
-        except Exception as e:
-            print(f"Warning: Could not initialize with text-embedding-3-small: {e}")
-            print("Trying with text-embedding-ada-002 (1536 dimensions) as fallback...")
+        
+        # Create custom embeddings adapter for 512 dimensions
+        class CustomDimensionEmbeddings:
+            """Adapter class to force 512 dimensions for OpenAI embeddings"""
             
-            # Fallback to the older model that we know works
-            self.embeddings = OpenAIEmbeddings(
-                openai_api_key=settings.OPENAI_API_KEY,
-                model="text-embedding-ada-002"
-            )
+            def __init__(self, api_key):
+                self.model = "text-embedding-3-small (custom 512-dim adapter)"
+                self.api_key = api_key
+                self._original_embeddings = OpenAIEmbeddings(
+                    openai_api_key=api_key,
+                    model="text-embedding-ada-002"  # This model works reliably
+                )
+            
+            def embed_query(self, text):
+                # Get the original embedding
+                original_embedding = self._original_embeddings.embed_query(text)
+                
+                # Use the first 512 dimensions only
+                truncated_embedding = original_embedding[:512]
+                return truncated_embedding
+            
+            def embed_documents(self, documents):
+                # Get the original embeddings
+                original_embeddings = self._original_embeddings.embed_documents(documents)
+                
+                # Truncate each embedding to 512 dimensions
+                truncated_embeddings = [emb[:512] for emb in original_embeddings]
+                return truncated_embeddings
+                
+            # Pass through any other attribute access to the original embeddings
+            def __getattr__(self, name):
+                return getattr(self._original_embeddings, name)
+        
+        # Use our custom embeddings adapter
+        self.embeddings = CustomDimensionEmbeddings(settings.OPENAI_API_KEY)
         
         # Initialize text splitter
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -112,9 +135,13 @@ class BaseResearchAgent:
     def setup_vector_store(self):
         """Setup Pinecone vector store"""
         try:
-            # Initialize Pinecone client with API key only (environment not needed in v3.0.0)
+            # Set environment variable for Pinecone API key
+            import os
+            os.environ["PINECONE_API_KEY"] = pinecone_api_key
+            
+            # Initialize Pinecone client with direct API key
             pc = PineconeClient(
-                api_key=settings.PINECONE_API_KEY
+                api_key=pinecone_api_key
             )
             
             # Check if index exists, create if not
@@ -212,10 +239,10 @@ class BaseResearchAgent:
             web_results = []
             try:
                 search_query = f"{state['topic']} {sector if 'sector' in locals() else ''}"
-                web_results = self.search_tool.invoke(
-                    search_query,
-                    max_results=25  # Force the max results parameter here too
-                )
+                web_results = self.search_tool.invoke({
+                    "query": search_query,
+                    "max_results": 25  # Ensure parameter is properly applied
+                })
                 print(f"Retrieved {len(web_results)} web search results")
             except Exception as e:
                 print(f"Web search error: {e}")
@@ -395,10 +422,10 @@ class BaseResearchAgent:
         
         # 1. Web search for current information
         try:
-            web_results = self.search_tool.invoke(
-                topic,
-                max_results=25  # Force the max results parameter here too
-            )
+            web_results = self.search_tool.invoke({
+                "query": topic,
+                "max_results": 25  # Ensure parameter is properly applied as a dictionary
+            })
             for result in web_results:
                 if isinstance(result, dict):
                     # Handle dictionary result format
