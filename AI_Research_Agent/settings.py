@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "agent",  # Add our agent app
 ]
 
 MIDDLEWARE = [
@@ -121,3 +122,20 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# AI Research Agent API Settings
+OPENAI_API_KEY = "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"
+TAVILY_API_KEY = "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"
+PINECONE_API_KEY = "pcsk_6d1bNh_Ez7hr1V9BCki23dipaUVvD5gpFYztCftysGCqeLuPh53AsK1eUMesjEHyv39KWB"
+PINECONE_ENVIRONMENT = "us-east-1"  # Just the region, not the full URL
+PINECONE_INDEX_NAME = "researchagent"
+
+LANGSMITH_TRACING="true"
+LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
+LANGSMITH_API_KEY="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"
+LANGSMITH_PROJECT="ai-research-agent"
+
+# Research Settings
+MAX_RESEARCH_DEPTH = 3
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
