@@ -10,7 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+import dj_database_url
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if present
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +26,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-4ax^r84!b9$%xgc46z9he&!v%mus&mhzh1#kvjpa^oi+&^c18f"
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-4ax^r84!b9$%xgc46z9he&!v%mus&mhzh1#kvjpa^oi+&^c18f")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", ".onrender.com"]
 
 
 # Application definition
@@ -42,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Add whitenoise for static files
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -75,10 +82,10 @@ WSGI_APPLICATION = "AI_Research_Agent.wsgi.application"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default="sqlite:///" + str(BASE_DIR / "db.sqlite3"),
+        conn_max_age=600,
+    )
 }
 
 
@@ -117,6 +124,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -124,16 +133,16 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # AI Research Agent API Settings
-OPENAI_API_KEY = "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"
-TAVILY_API_KEY = "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"
-PINECONE_API_KEY = "pcsk_6d1bNh_Ez7hr1V9BCki23dipaUVvD5gpFYztCftysGCqeLuPh53AsK1eUMesjEHyv39KWB"
-PINECONE_ENVIRONMENT = "us-east-1"  # Just the region, not the full URL
-PINECONE_INDEX_NAME = "researchagent"
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
+PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY", "")
+PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT", "us-east-1")  # Just the region, not the full URL
+PINECONE_INDEX_NAME = os.environ.get("PINECONE_INDEX_NAME", "researchagent")
 
-LANGSMITH_TRACING="true"
-LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
-LANGSMITH_API_KEY="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"
-LANGSMITH_PROJECT="ai-research-agent"
+LANGSMITH_TRACING = os.environ.get("LANGSMITH_TRACING", "true")
+LANGSMITH_ENDPOINT = os.environ.get("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
+LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY", "")
+LANGSMITH_PROJECT = os.environ.get("LANGSMITH_PROJECT", "ai-research-agent")
 
 # Research Settings
 MAX_RESEARCH_DEPTH = 3
