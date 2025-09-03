@@ -19,24 +19,35 @@
     
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            --warning-gradient: linear-gradient(135deg, #ff9a44 0%, #fc6076 100%);
-            --danger-gradient: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
-            --border-radius: 16px;
-            --shadow-light: 0 10px 30px rgba(0, 0, 0, 0.08);
-            --shadow-medium: 0 20px 40px rgba(0, 0, 0, 0.12);
-            --shadow-hover: 0 15px 50px rgba(0, 0, 0, 0.2);
+            --primary-gradient: linear-gradient(135deg, #1a237e 0%, #4481eb 100%);
+            --secondary-gradient: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+            --success-gradient: linear-gradient(135deg, #0f9d58 0%, #25d366 100%);
+            --warning-gradient: linear-gradient(135deg, #f46b45 0%, #eea849 100%);
+            --danger-gradient: linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%);
+            --info-gradient: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+            --border-radius: 14px;
+            --shadow-light: 0 8px 24px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 16px 32px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.18);
+            --primary-color: #1a237e;
+            --primary-rgb: 26, 35, 126;
+            --secondary-color: #4481eb;
+            --secondary-rgb: 68, 129, 235;
+            --text-color-dark: #212529;
+            --text-color: #495057;
+            --text-muted: #6c757d;
+            --text-light: #f8f9fa;
+            --border-color: #e9ecef;
         }
         
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8f9fa;
-            color: #495057;
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 40px 0;
             position: relative;
+            overflow-x: hidden;
         }
         
         body::before {
@@ -45,8 +56,8 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 65vh;
-            background: var(--primary-gradient);
+            height: 70vh;
+            background: var(--secondary-gradient);
             z-index: -1;
         }
         
@@ -55,26 +66,32 @@
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-medium);
             margin: 0 auto;
-            padding: 40px;
+            padding: 0;
             position: relative;
             overflow: hidden;
             max-width: 1200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         /* Header styling */
         .header-section {
             text-align: center;
-            margin-bottom: 40px;
             position: relative;
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 50px 40px;
+            margin-bottom: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .header-title {
-            color: #212529;
+            color: white;
             font-weight: 700;
             font-size: 3rem;
             margin-bottom: 20px;
             position: relative;
             display: inline-block;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
         
         .header-title::after {
@@ -83,34 +100,44 @@
             bottom: -10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background: var(--primary-gradient);
+            width: 80px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.7);
             border-radius: 2px;
         }
         
         .header-subtitle {
-            color: #6c757d;
+            color: rgba(255, 255, 255, 0.9);
             font-size: 1.2rem;
             font-weight: 300;
             max-width: 700px;
             margin: 0 auto;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+            line-height: 1.6;
+        }
+        
+        .content-wrapper {
+            padding: 40px;
         }
         
         /* Agent selection styling */
         .agent-selection {
             padding: 30px;
-            background: #f8f9fc;
+            background-color: #f8f9fc;
+            background-image: linear-gradient(180deg, #f8f9fc 0%, rgba(248,249,252,0.9) 100%);
             border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
+            box-shadow: var(--shadow-medium);
             margin-bottom: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
         
         .agent-title {
             font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 20px;
-            color: #343a40;
+            margin-bottom: 25px;
+            color: var(--text-color-dark);
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
         
         .agent-buttons {
@@ -161,11 +188,11 @@
         }
         
         .agent-btn.it {
-            background: var(--success-gradient);
+            background: linear-gradient(135deg, #0056b3, #007bff);
         }
         
         .agent-btn.pharma {
-            background: var(--warning-gradient);
+            background: linear-gradient(135deg, #1a746b, #20c997);
         }
         
         .agent-btn:hover {
@@ -176,6 +203,19 @@
         .agent-btn.active {
             transform: translateY(-3px) scale(1.05);
             box-shadow: var(--shadow-hover);
+            position: relative;
+        }
+        
+        .agent-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 3px;
         }
         
         .agent-btn i {
@@ -185,16 +225,28 @@
 
         .agent-info {
             background: white;
-            border-left: 4px solid #4facfe;
-            padding: 15px;
+            border-left: 4px solid var(--primary-color);
+            padding: 20px;
             border-radius: 8px;
-            margin-top: 20px;
+            margin-top: 25px;
             display: none;
             animation: fadeIn 0.5s ease;
+            box-shadow: var(--shadow-small);
         }
         
         .agent-info.show {
             display: block;
+        }
+        
+        .agent-info h5 {
+            color: var(--text-color-dark);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .agent-info p {
+            color: var(--text-color);
+            line-height: 1.6;
         }
         
         @keyframes fadeIn {
@@ -205,11 +257,13 @@
         /* Research form styling */
         .research-form {
             background: white;
+            background-image: linear-gradient(to bottom, #ffffff, #fafbff);
             border-radius: var(--border-radius);
-            padding: 30px;
+            padding: 35px;
             margin-bottom: 40px;
-            box-shadow: var(--shadow-light);
+            box-shadow: var(--shadow-medium);
             position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
         
         .research-form::before {
@@ -225,37 +279,52 @@
         
         .form-label {
             font-weight: 600;
-            color: #212529;
-            margin-bottom: 12px;
+            color: var(--text-color-dark);
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 1.15rem;
         }
         
         .form-control {
             border-radius: 12px;
             border: 2px solid #e9ecef;
-            padding: 15px;
+            padding: 16px 20px;
             font-size: 1rem;
             transition: all 0.3s ease;
             box-shadow: none !important;
         }
         
         .form-control:focus {
-            border-color: #6a11cb;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1) !important;
         }
         
         .research-btn {
             background: var(--primary-gradient);
             border: none;
             border-radius: 12px;
-            padding: 15px 30px;
+            padding: 16px 25px;
             font-weight: 600;
             font-size: 1.1rem;
             color: white;
             transition: all 0.3s ease;
+            box-shadow: var(--shadow-medium);
             cursor: pointer;
-            box-shadow: var(--shadow-light);
             position: relative;
             overflow: hidden;
             z-index: 1;
+            letter-spacing: 0.5px;
+        }
+        
+        .research-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .research-btn:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-medium);
         }
         
         .research-btn::after {
@@ -341,8 +410,8 @@
         }
         
         .progress-icon {
-            width: 60px;
-            height: 60px;
+            width: 64px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -353,19 +422,22 @@
             position: relative;
             z-index: 1;
             transition: all 0.5s ease;
+            box-shadow: var(--shadow-light);
         }
         
         .progress-stage.active .progress-icon {
             background: var(--primary-gradient);
-            border-color: #6a11cb;
+            border-color: var(--primary-color);
             color: white;
-            box-shadow: 0 0 0 5px rgba(106, 17, 203, 0.2);
+            box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0.2);
+            transform: scale(1.05);
         }
         
         .progress-stage.completed .progress-icon {
             background: var(--success-gradient);
-            border-color: #43e97b;
+            border-color: #0f9d58;
             color: white;
+            box-shadow: 0 0 0 4px rgba(15, 157, 88, 0.15);
         }
         
         .progress-stage.active::after,
@@ -579,13 +651,15 @@
             background: #f8f9fc;
             border-radius: 12px;
             overflow: hidden;
+            font-size: 10px;
         }
         
         .sources-list li {
-            padding: 15px 20px;
+            padding: 5px 5px;
             border-bottom: 1px solid #e9ecef;
             display: flex;
             align-items: center;
+
         }
         
         .sources-list li:last-child {
@@ -595,7 +669,7 @@
         .sources-list li i {
             margin-right: 15px;
             color: #6a11cb;
-            font-size: 1.2rem;
+            font-size: 1rem;
         }
         
         .loading-spinner {
@@ -769,11 +843,14 @@
         /* Footer styling */
         .footer {
             text-align: center;
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 2px solid #f1f3f5;
-            color: #adb5bd;
+            margin-top: 0;
+            padding: 25px 0;
+            background: var(--secondary-gradient);
+            color: rgba(255, 255, 255, 0.8);
             font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
         }
         
         .footer p {
@@ -987,11 +1064,12 @@
                 </p>
             </div>
             
-            <!-- Alert Container -->
-            <div id="alertContainer"></div>
-            
-            <!-- Agent Selection Section -->
-            <div class="agent-selection">
+            <div class="content-wrapper">
+                <!-- Alert Container -->
+                <div id="alertContainer"></div>
+                
+                <!-- Agent Selection Section -->
+                <div class="agent-selection">
                 <h2 class="agent-title"><i class="fas fa-robot me-2"></i>Choose your Research Agent</h2>
                 
                 <div class="agent-buttons">
@@ -1146,41 +1224,63 @@
                 <p>AI Research Agent © 2025 | Powered by Advanced AI Technologies</p>
                 <p>Using OpenAI GPT-4o, LangGraph, Pinecone and Tavily Search</p>
             </div>
+            
+            </div> <!-- End content-wrapper -->
         </div>
     </div>
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Highlight.js for code syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    
     <script>
+        // Global variables
         let selectedAgent = 'auto';
         let currentProgress = 0;
+        let progressInterval;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default agent
+            selectAgent('auto', document.querySelector('.agent-btn.auto'));
+            
+            // Enter key to start research
+            document.getElementById('researchTopic').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    startResearch();
+                }
+            });
+        });
         
         // Agent selection
-        function selectAgent(agent) {
+        function selectAgent(agent, button) {
             selectedAgent = agent;
             
             // Update button states
             document.querySelectorAll('.agent-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
             
-            // Show selected agent info
-            let agentInfo = '';
-            switch(agent) {
-                case 'auto':
-                    agentInfo = 'AI will automatically detect the best agent for your topic';
-                    break;
-                case 'it':
-                    agentInfo = 'IT Research Agent: Specialized in technology, software, and IT topics';
-                    break;
-                case 'pharma':
-                    agentInfo = 'Pharmaceutical Agent: Specialized in medical research and drug topics';
-                    break;
+            if (button) {
+                button.classList.add('active');
+            } else {
+                document.querySelector(`.agent-btn[data-agent="${agent}"]`).classList.add('active');
             }
             
-            // You can add a tooltip or info display here
+            // Show appropriate agent info
+            document.querySelectorAll('#agentInfo div').forEach(div => {
+                div.style.display = 'none';
+            });
+            
+            if (agent === 'auto') {
+                document.getElementById('autoInfo').style.display = 'block';
+            } else if (agent === 'it') {
+                document.getElementById('itInfo').style.display = 'block';
+            } else if (agent === 'pharma') {
+                document.getElementById('pharmaInfo').style.display = 'block';
+            }
         }
         
         // Start research process
@@ -1188,7 +1288,7 @@
             const topic = document.getElementById('researchTopic').value.trim();
             
             if (!topic) {
-                showAlert('Please enter a research topic', 'danger');
+                showAlert('Please enter a research topic', 'warning');
                 return;
             }
             
@@ -1197,12 +1297,18 @@
             researchBtn.disabled = true;
             researchBtn.innerHTML = '<span class="loading-spinner"></span>Researching...';
             
-            // Show progress section
-            document.getElementById('progressSection').style.display = 'block';
-            document.getElementById('resultsSection').style.display = 'none';
+            // Reset progress stages
+            document.querySelectorAll('.progress-stage').forEach(stage => {
+                stage.classList.remove('active', 'completed');
+            });
+            document.getElementById('stage1').classList.add('active');
             
-            // Simulate progress
-            simulateProgress();
+            // Show progress section
+            document.getElementById('progressSection').classList.add('active');
+            document.getElementById('resultsSection').classList.remove('active');
+            
+            // Start progress simulation
+            startProgressSimulation();
             
             try {
                 // Make API call to backend
@@ -1221,115 +1327,179 @@
                 
                 if (data.success) {
                     // Complete progress
-                    currentProgress = 100;
-                    updateProgress();
+                    completeProgress();
                     
                     // Show results
-                    displayResults(data.report);
-                    showAlert('Research completed successfully!', 'success');
+                    setTimeout(() => {
+                        displayResults(data.report, topic);
+                        showAlert('Research completed successfully!', 'success');
+                    }, 1000);
                 } else {
                     throw new Error(data.error || 'Research failed');
                 }
                 
             } catch (error) {
                 console.error('Research error:', error);
+                stopProgressSimulation();
                 showAlert(`Research failed: ${error.message}`, 'danger');
             } finally {
                 // Reset button
                 researchBtn.disabled = false;
-                researchBtn.innerHTML = '<i class="fas fa-search me-2"></i>Start Research';
-                
-                // Hide progress after delay
-                setTimeout(() => {
-                    document.getElementById('progressSection').style.display = 'none';
-                }, 2000);
+                researchBtn.innerHTML = '<i class="fas fa-file-alt me-2"></i>Generate Research Report';
             }
         }
         
-        // Simulate research progress
-        function simulateProgress() {
+        // Start progress simulation
+        function startProgressSimulation() {
             currentProgress = 0;
             const progressBar = document.querySelector('.progress-bar');
             const statusText = document.getElementById('statusText');
             
             const progressSteps = [
-                { progress: 25, text: 'Planning research...' },
-                { progress: 50, text: 'Gathering information...' },
-                { progress: 75, text: 'Analyzing data...' },
-                { progress: 90, text: 'Generating report...' }
+                { progress: 15, text: 'Planning research approach...', stage: 1 },
+                { progress: 25, text: 'Formulating research questions...', stage: 1 },
+                { progress: 35, text: 'Gathering information from web...', stage: 2 },
+                { progress: 50, text: 'Retrieving knowledge base documents...', stage: 2 },
+                { progress: 65, text: 'Analyzing collected information...', stage: 3 },
+                { progress: 80, text: 'Synthesizing findings...', stage: 3 },
+                { progress: 90, text: 'Generating comprehensive report...', stage: 4 }
             ];
             
             let stepIndex = 0;
             
-            const interval = setInterval(() => {
-                if (currentProgress >= 100) {
-                    clearInterval(interval);
+            clearInterval(progressInterval);
+            progressInterval = setInterval(() => {
+                if (currentProgress >= 95) {
+                    clearInterval(progressInterval);
                     return;
                 }
                 
-                currentProgress += 2;
-                updateProgress();
+                currentProgress += 0.5;
+                progressBar.style.width = currentProgress + '%';
                 
                 // Update status text at certain progress points
                 if (stepIndex < progressSteps.length && currentProgress >= progressSteps[stepIndex].progress) {
-                    statusText.textContent = progressSteps[stepIndex].text;
+                    statusText.innerHTML = `<i class="fas fa-sync-alt fa-spin me-2"></i>${progressSteps[stepIndex].text}`;
+                    
+                    // Update stages
+                    document.querySelectorAll('.progress-stage').forEach(stage => {
+                        stage.classList.remove('active');
+                    });
+                    
+                    // Complete previous stages
+                    for (let i = 1; i < progressSteps[stepIndex].stage; i++) {
+                        document.getElementById(`stage${i}`).classList.add('completed');
+                    }
+                    
+                    // Activate current stage
+                    document.getElementById(`stage${progressSteps[stepIndex].stage}`).classList.add('active');
+                    
                     stepIndex++;
                 }
             }, 100);
         }
         
-        // Update progress bar
-        function updateProgress() {
-            const progressBar = document.querySelector('.progress-bar');
-            progressBar.style.width = currentProgress + '%';
-            progressBar.setAttribute('aria-valuenow', currentProgress);
+        // Stop progress simulation
+        function stopProgressSimulation() {
+            clearInterval(progressInterval);
+        }
+        
+        // Complete progress animation
+        function completeProgress() {
+            stopProgressSimulation();
+            currentProgress = 100;
+            
+            document.querySelector('.progress-bar').style.width = '100%';
+            document.getElementById('statusText').innerHTML = '<i class="fas fa-check-circle me-2"></i>Research completed!';
+            
+            // Complete all stages
+            document.querySelectorAll('.progress-stage').forEach((stage, index) => {
+                setTimeout(() => {
+                    stage.classList.remove('active');
+                    stage.classList.add('completed');
+                }, index * 200);
+            });
+            
+            // Hide progress section after delay
+            setTimeout(() => {
+                document.getElementById('progressSection').classList.remove('active');
+            }, 2000);
         }
         
         // Display research results
-        function displayResults(report) {
+        function displayResults(report, topic) {
             const resultsSection = document.getElementById('resultsSection');
             const reportContent = document.getElementById('reportContent');
+            const sourcesList = document.getElementById('sourcesList');
             
-            // Convert markdown to HTML for better display
-            const markdownContent = report.content || 'Report content not available';
-            const htmlContent = convertMarkdownToHtml(markdownContent);
+            // Update topic and agent info
+            document.getElementById('resultTopic').textContent = `Topic: ${topic}`;
             
-            reportContent.innerHTML = `
-                <div class="row">
-                    <div class="col-12">
-                        <div class="alert alert-success">
-                            <strong>Agent Used:</strong> ${report.agent_used} Agent
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="report-section">
-                    <h4 class="report-title">
-                        <i class="fas fa-file-alt me-2"></i>
-                        Research Report
-                    </h4>
-                    <div class="report-content markdown-content">
-                        ${htmlContent}
-                    </div>
-                </div>
-                
-                <div class="report-section">
-                    <h4 class="report-title">
-                        <i class="fas fa-link me-2"></i>
-                        Sources
-                    </h4>
-                    <div class="report-content">
-                        <ul class="sources-list">
-                            ${(report.sources || []).map(source => `<li><i class="fas fa-external-link-alt me-2"></i>${source}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
+            let agentIcon = 'robot';
+            if (report.agent_used === 'IT') {
+                agentIcon = 'laptop-code';
+            } else if (report.agent_used === 'Pharma') {
+                agentIcon = 'pills';
+            }
+            
+            document.getElementById('agentBadge').innerHTML = `
+                <i class="fas fa-${agentIcon}"></i> Generated by ${report.agent_used} Agent
             `;
             
-            resultsSection.style.display = 'block';
+            // Convert markdown to HTML
+            const htmlContent = convertMarkdownToHtml(report.content || 'Report content not available');
+            reportContent.innerHTML = htmlContent;
+            
+            // Apply syntax highlighting to code blocks
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+            
+            // Populate sources list
+            sourcesList.innerHTML = '';
+            const sources = report.sources || [];
+            
+            if (sources.length === 0) {
+                sourcesList.innerHTML = `
+                    <li class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        No external sources were referenced
+                    </li>
+                `;
+            } else {
+                sources.forEach(source => {
+                    // Determine if the source is a URL or just text
+                    const isUrl = source.startsWith('http') || source.startsWith('www');
+                    
+                    if (isUrl) {
+                        // Format URLs as links
+                        sourcesList.innerHTML += `
+                            <li>
+                                <i class="fas fa-external-link-alt"></i>
+                                <a href="${source}" target="_blank" rel="noopener noreferrer">
+                                    ${truncateText(source, 60)}
+                                </a>
+                            </li>
+                        `;
+                    } else {
+                        // Format non-URL sources
+                        sourcesList.innerHTML += `
+                            <li>
+                                <i class="fas fa-book"></i>
+                                ${source}
+                            </li>
+                        `;
+                    }
+                });
+            }
+            
+            // Display results section
+            resultsSection.classList.add('active');
             
             // Scroll to results
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 300);
         }
         
         // Enhanced markdown to HTML converter
@@ -1363,13 +1533,16 @@
             // Blockquotes
             html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
             
+            // Links
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            
             // Clean up excessive line breaks
             html = html.replace(/\n\s*\n\s*\n/g, '\n\n');
             
             // Convert remaining line breaks to <br> tags
             html = html.replace(/\n/g, '<br>');
             
-            // Wrap consecutive list items in <ul> tags
+            // Wrap consecutive list items in <ul> or <ol> tags
             html = html.replace(/(<li>.*?<\/li>)(<br><li>.*?<\/li>)*/g, function(match) {
                 const items = match.match(/<li>.*?<\/li>/g);
                 return `<ul>${items.join('')}</ul>`;
@@ -1383,25 +1556,45 @@
             return html;
         }
         
-        // Show alert messages
+        // Show custom alert messages
         function showAlert(message, type) {
             // Remove existing alerts
-            const existingAlert = document.querySelector('.alert');
+            const existingAlert = document.querySelector('.alert-custom');
             if (existingAlert) {
                 existingAlert.remove();
             }
             
+            let title = 'Notice';
+            let icon = 'info-circle';
+            
+            if (type === 'success') {
+                title = 'Success';
+                icon = 'check-circle';
+            } else if (type === 'danger') {
+                title = 'Error';
+                icon = 'exclamation-circle';
+            } else if (type === 'warning') {
+                title = 'Warning';
+                icon = 'exclamation-triangle';
+            }
+            
             // Create new alert
             const alert = document.createElement('div');
-            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.className = `alert-custom alert-${type}`;
             alert.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="alert-icon">
+                    <i class="fas fa-${icon}"></i>
+                </div>
+                <div class="alert-content">
+                    <h5 class="alert-title">${title}</h5>
+                    <p class="alert-message">${message}</p>
+                </div>
+                <button class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
             `;
             
-            // Insert at top of main container
-            const mainContainer = document.querySelector('.main-container');
-            mainContainer.insertBefore(alert, mainContainer.firstChild);
+            // Insert at top of container
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.appendChild(alert);
             
             // Auto-dismiss after 5 seconds
             setTimeout(() => {
@@ -1411,18 +1604,26 @@
             }, 5000);
         }
         
-        // Enter key to start research
-        document.getElementById('researchTopic').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                startResearch();
-            }
-        });
+        // Start a new research (reset the form)
+        function startNewResearch() {
+            document.getElementById('researchTopic').value = '';
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('researchTopic').focus();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default agent
-            selectAgent('auto');
-        });
+        // Print the current report
+        function printReport() {
+            window.print();
+        }
+        
+        // Helper function to truncate text
+        function truncateText(text, maxLength) {
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
     </script>
 </body>
 </html>

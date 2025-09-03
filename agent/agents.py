@@ -228,7 +228,7 @@ class BaseResearchAgent:
                     sector = "IT" if "IT" in state["agent_type"] else "Pharma"
                     kb_docs = self.vector_store.similarity_search(
                         state["topic"], 
-                        k=10,  # Get more documents for comprehensive coverage
+                        k=100,  # Increased from 30 to 100 documents for comprehensive coverage
                         filter={"sector": sector}
                     )
                     print(f"Retrieved {len(kb_docs)} relevant documents from knowledge base")
@@ -239,9 +239,9 @@ class BaseResearchAgent:
             web_results = []
             try:
                 search_query = f"{state['topic']} {sector if 'sector' in locals() else ''}"
-                web_results = self.search_tool.invoke({
+                web_results = self.search_tool.invoke(input={
                     "query": search_query,
-                    "max_results": 25  # Ensure parameter is properly applied
+                    "max_results": 30  # Increased from 25 to 30 web results
                 })
                 print(f"Retrieved {len(web_results)} web search results")
             except Exception as e:
@@ -307,10 +307,10 @@ class BaseResearchAgent:
             Analyze the following information about: {state['topic']}
             
             Knowledge Base Documents ({len(kb_docs)}):
-            {chr(10).join([f"- {str(doc['content'])[:200]}... (Source: {str(doc['source'])})" for doc in kb_docs[:5]])}
+            {chr(10).join([f"- {str(doc['content'])[:200]}... (Source: {str(doc['source'])})" for doc in kb_docs[:10]])}
             
             Web Search Results ({len(web_docs)}):
-            {chr(10).join([f"- {str(doc['content'])[:200]}... (Source: {str(doc['source'])})" for doc in web_docs[:5]])}
+            {chr(10).join([f"- {str(doc['content'])[:200]}... (Source: {str(doc['source'])})" for doc in web_docs[:10]])}
             
             Please provide a comprehensive analysis that:
             1. Identifies key insights from both knowledge base and web search
@@ -422,9 +422,9 @@ class BaseResearchAgent:
         
         # 1. Web search for current information
         try:
-            web_results = self.search_tool.invoke({
+            web_results = self.search_tool.invoke(input={
                 "query": topic,
-                "max_results": 25  # Ensure parameter is properly applied as a dictionary
+                "max_results": 30  # Increased from 25 to 30 web results
             })
             for result in web_results:
                 if isinstance(result, dict):
@@ -454,7 +454,7 @@ class BaseResearchAgent:
         # 2. Query knowledge base (vector store)
         if self.vector_store:
             try:
-                knowledge_results = self.vector_store.similarity_search(topic, k=5)
+                knowledge_results = self.vector_store.similarity_search(topic, k=100)
                 documents.extend(knowledge_results)
             except Exception as e:
                 print(f"Knowledge base search error: {e}")

@@ -24,8 +24,8 @@ if __name__ == "__main__":
 # Now import settings after Django is configured (if needed)
 from django.conf import settings
 
-# Define the API key directly to avoid issues
-pinecone_api_key = "pcsk_6d1bNh_Ez7hr1V9BCki23dipaUVvD5gpFYztCftysGCqeLuPh53AsK1eUMesjEHyv39KWB"
+# Get API key from settings (loaded from .env file)
+pinecone_api_key = None  # Will be set from settings
 
 
 logger = logging.getLogger(__name__)
@@ -138,11 +138,14 @@ class DocumentProcessor:
     def populate_vector_store(self, force_recreate: bool = False):
         """Populate the vector store with documents from both sectors"""
         try:
+            # Get API key from settings (loaded from .env file)
+            api_key = settings.PINECONE_API_KEY
+            
             # Set the environment variable for Pinecone
-            os.environ["PINECONE_API_KEY"] = pinecone_api_key
+            os.environ["PINECONE_API_KEY"] = api_key
             
             # Initialize Pinecone client
-            pinecone_client = PineconeClient(api_key=pinecone_api_key)
+            pinecone_client = PineconeClient(api_key=api_key)
             
             # Check if index exists and get its details
             index_exists = settings.PINECONE_INDEX_NAME in pinecone_client.list_indexes().names()
@@ -207,7 +210,7 @@ class DocumentProcessor:
             vector_store = PineconeVectorStore(
                 index_name=settings.PINECONE_INDEX_NAME,
                 embedding=self.embeddings,
-                pinecone_api_key=pinecone_api_key,
+                pinecone_api_key=api_key,
             )
             
             # Then add documents one by one to avoid dimension mismatch
@@ -230,11 +233,14 @@ class DocumentProcessor:
     def get_relevant_documents(self, query: str, sector: str = None, k: int = 5) -> List[Dict[str, Any]]:
         """Retrieve relevant documents from the vector store"""
         try:
+            # Get API key from settings (loaded from .env file)
+            api_key = settings.PINECONE_API_KEY
+            
             # Ensure environment variable is set
-            os.environ["PINECONE_API_KEY"] = pinecone_api_key
+            os.environ["PINECONE_API_KEY"] = api_key
             
             # Initialize Pinecone client
-            pinecone_client = PineconeClient(api_key=pinecone_api_key)
+            pinecone_client = PineconeClient(api_key=api_key)
             
             if settings.PINECONE_INDEX_NAME not in pinecone_client.list_indexes().names():
                 logger.warning("Pinecone index does not exist")
@@ -244,7 +250,7 @@ class DocumentProcessor:
             vector_store = PineconeVectorStore(
                 index_name=settings.PINECONE_INDEX_NAME,
                 embedding=self.embeddings,
-                pinecone_api_key=pinecone_api_key,
+                pinecone_api_key=api_key,
             )
             
             # Build search query

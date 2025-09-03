@@ -73,8 +73,12 @@ class BaseResearchAgent:
             chunk_overlap=settings.CHUNK_OVERLAP
         )
         
-        # Initialize Tavily Search with explicit api_key parameter
-        self.search_tool = TavilySearch(tavily_api_key=settings.TAVILY_API_KEY)
+        # Initialize Tavily Search with explicit api_key parameter and advanced search settings
+        self.search_tool = TavilySearch(
+            tavily_api_key=settings.TAVILY_API_KEY,
+            search_depth="advanced",  # Use advanced search for more comprehensive results
+            k=25  # Set default k to 25 (max_results can override this)
+        )
         
         # Initialize vector store
         self.vector_store = None
@@ -180,11 +184,36 @@ class BaseResearchAgent:
             web_results = []
             try:
                 search_query = f"{state['topic']} {sector if 'sector' in locals() else ''}"
+                # Force max_results to 25 with other search parameters
                 web_results = self.search_tool.invoke({
                     "query": search_query,
-                    "max_results": 25
+                    "max_results": 25,
+                    "search_depth": "advanced",
+                    "include_domains": [],
+                    "exclude_domains": []
                 })
                 print(f"Retrieved {len(web_results)} web search results")
+                
+                # Add a check to debug Tavily results limitation
+                if len(web_results) < 25:
+                    print(f"Warning: Tavily returned fewer results than requested ({len(web_results)})")
+                    print("Making a second search request to supplement results...")
+                    # Try a slightly modified query to get additional results
+                    alt_query = f"{state['topic']} latest research {sector if 'sector' in locals() else ''}"
+                    additional_results = self.search_tool.invoke({
+                        "query": alt_query,
+                        "max_results": 25 - len(web_results),
+                        "search_depth": "advanced"
+                    })
+                    
+                    # Add only unique results based on URL
+                    existing_urls = [r.get("url", "") for r in web_results if isinstance(r, dict)]
+                    for result in additional_results:
+                        if isinstance(result, dict) and result.get("url") not in existing_urls:
+                            web_results.append(result)
+                            existing_urls.append(result.get("url", ""))
+                    
+                    print(f"After supplementing: {len(web_results)} total web search results")
             except Exception as e:
                 print(f"Web search error: {e}")
             
@@ -235,14 +264,46 @@ class BaseResearchAgent:
             
             print(f"Analyzing {len(kb_docs)} knowledge base documents and {len(web_docs)} web search results")
             
+            # Create a very concise sources summary for display
+            def get_concise_sources_summary():
+                """Create a very brief summary of sources used"""
+                kb_unique = list(set([clean_source_display(doc['source']) for doc in kb_docs]))
+                web_unique = list(set([clean_source_display(doc['source']) for doc in web_docs]))
+                
+                kb_summary = ", ".join(kb_unique[:5])  # Show max 5 unique KB sources
+                web_summary = f"{len(web_docs)} web sources" if web_docs else "No web sources"
+                
+                return f"KB: {kb_summary} | {web_summary}"
+            
+            print(f"Sources: {get_concise_sources_summary()}")
+            
+            # Create a much more concise analysis prompt with minimal source info
+            def clean_source_display(source):
+                """Clean source for display - show only filename, not full path"""
+                if isinstance(source, str):
+                    if source.startswith("C:\\") or source.startswith("/"):
+                        # Extract just the filename
+                        filename = source.split("\\")[-1].split("/")[-1]
+                        # Remove .pdf extension for cleaner display
+                        return filename.replace(".pdf", "")
+                    elif source == "Web Search":
+                        return "Web"
+                    else:
+                        return source[:30] + "..." if len(source) > 30 else source
+                return str(source)[:30] + "..." if len(str(source)) > 30 else str(source)
+            
+            # Show only 2-3 documents with very short content previews
+            kb_preview = chr(10).join([f"- {str(doc['content'])[:50]}... ({clean_source_display(doc['source'])})" for doc in kb_docs[:3]])
+            web_preview = chr(10).join([f"- {str(doc['content'])[:50]}... ({clean_source_display(doc['source'])})" for doc in web_docs[:2]])
+            
             analysis_prompt = f"""
             Analyze the following information about: {state['topic']}
             
             Knowledge Base Documents ({len(kb_docs)}):
-            {chr(10).join([f"- {str(doc['content'])[:200]}... (Source: {str(doc['source'])})" for doc in kb_docs[:5]])}
+            {kb_preview}
             
             Web Search Results ({len(web_docs)}):
-            {chr(10).join([f"- {str(doc['content'])[:200]}... (Source: {str(doc['source'])})" for doc in web_docs[:5]])}
+            {web_preview}
             """
             
             analysis_response = self.llm.invoke(analysis_prompt)
@@ -273,6 +334,16 @@ class BaseResearchAgent:
             Generate a comprehensive, detailed research report on: {state['topic']}
             Based on the following analysis:
             {state['analysis'].get('key_insights', 'No analysis available')}
+            
+            Requirements:
+            1. Generate a comprehensive, well-structured markdown report (800-1200 words)
+            2. Use proper markdown formatting: headers (# ## ###), bold (**text**), italic (*text*), lists (- item)
+            3. Make the report dynamic and flowing, not rigidly structured
+            4. Include relevant examples, trends, and insights
+            5. Provide actionable insights and future outlook
+            6. Include a concise "Sources" section at the end with key references
+            
+            Report:
             """
             
             report_response = self.llm.invoke(report_prompt)
