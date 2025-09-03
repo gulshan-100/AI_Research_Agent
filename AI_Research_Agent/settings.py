@@ -13,10 +13,11 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # Load environment variables from .env file if present
-load_dotenv()
+# Using find_dotenv=True to search for the .env file in parent directories
+load_dotenv(find_dotenv(usecwd=True))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,16 +133,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+TAVILY_API_KEY = os.environ["TAVILY_API_KEY"]
+PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
+LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY")
+
 # AI Research Agent API Settings
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
-PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY", "")
 PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT", "us-east-1")  # Just the region, not the full URL
 PINECONE_INDEX_NAME = os.environ.get("PINECONE_INDEX_NAME", "researchagent")
 
 LANGSMITH_TRACING = os.environ.get("LANGSMITH_TRACING", "true")
 LANGSMITH_ENDPOINT = os.environ.get("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
-LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY", "")
 LANGSMITH_PROJECT = os.environ.get("LANGSMITH_PROJECT", "ai-research-agent")
 
 # Research Settings
