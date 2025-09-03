@@ -2,6 +2,14 @@
 
 A specialized AI research application with two specialized agents: **IT Research Agent** and **Pharmaceutical Research Agent**. Built with Django, LangChain, LangGraph, and LangSmith.
 
+# Interface Sscreenshot
+
+<img width="1317" height="837" alt="Screenshot 2025-09-03 133518" src="https://github.com/user-attachments/assets/43ada846-eb44-4ce3-b392-91a5d9717ff7" />
+
+# Demo Video 
+
+https://github.com/user-attachments/assets/e757c302-c325-4979-a8aa-d48d20f3bd4c
+
 ## Features
 
 - 🤖 **Auto-Detection**: Automatically selects the best agent for your research topic
