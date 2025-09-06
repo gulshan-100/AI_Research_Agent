@@ -20,7 +20,7 @@ class ResearchReport(BaseModel):
     sources: List[str] = Field(description="Sources consulted")
 
 class AgentState(Dict):
-    """State management for LangGraph agents"""
+    """State management for LangGraph agents with loop support"""
     topic: str
     plan: ResearchPlan
     documents: List[Any]
@@ -29,3 +29,10 @@ class AgentState(Dict):
     agent_type: str
     current_step: str
     error: str
+    
+    # New fields for iterative research loops
+    validation: Dict[str, Any]  # Quality validation results
+    review: Dict[str, Any]      # Report review results
+    iteration_count: int        # Number of research refinement iterations
+    regeneration_count: int     # Number of report regeneration attempts
+    refinement_queries: List[str]  # Additional search queries for refinement
