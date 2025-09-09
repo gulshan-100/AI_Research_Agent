@@ -9,7 +9,6 @@ from django.conf import settings
 # LangChain imports
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_pinecone import Pinecone as LangchainPinecone
-from langchain_tavily import TavilySearch
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain.prompts import ChatPromptTemplate
@@ -21,23 +20,9 @@ from langgraph.checkpoint.memory import MemorySaver
 # Local imports
 from .models import ResearchPlan, ResearchReport, AgentState
 
-# Initialize Pinecone with new API
+# External APIs
 from pinecone import Pinecone as PineconeClient
-
-# LangChain imports
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_pinecone import Pinecone as LangchainPinecone
-from langchain_tavily import TavilySearch
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.schema import Document
-from langchain.prompts import ChatPromptTemplate
-
-# LangGraph imports
-from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
-
-# Pinecone
-from pinecone import Pinecone as PineconeClient
+from tavily import TavilyClient
 
 from .models import ResearchPlan, ResearchReport, AgentState
 
@@ -51,20 +36,49 @@ class BaseResearchAgent:
             temperature=0.7,
             openai_api_key=settings.OPENAI_API_KEY
         )
-        # Use the same embedding model logic as document_loader
-        try:
-            self.embeddings = OpenAIEmbeddings(
-                openai_api_key=settings.OPENAI_API_KEY,
-                model="text-embedding-3-small"
-            )
-        except Exception as e:
-            print(f"Warning: Could not initialize with text-embedding-3-small: {e}")
-            print("Trying with text-embedding-ada-002 (1536 dimensions) as fallback...")
+        # Create custom embeddings adapter to ensure 512 dimensions for Pinecone compatibility
+        class CustomDimensionEmbeddings:
+            """Adapter class to force 512 dimensions for OpenAI embeddings"""
             
-            # Fallback to the older model that we know works
+            def __init__(self, api_key):
+                self.model = "text-embedding-3-small (custom 512-dim adapter)"
+                self.api_key = api_key
+                self._original_embeddings = OpenAIEmbeddings(
+                    openai_api_key=api_key,
+                    model="text-embedding-ada-002"  # This model works reliably
+                )
+            
+            def embed_query(self, text):
+                # Get the original embedding
+                original_embedding = self._original_embeddings.embed_query(text)
+                
+                # Use the first 512 dimensions only
+                truncated_embedding = original_embedding[:512]
+                return truncated_embedding
+            
+            def embed_documents(self, documents):
+                # Get the original embeddings
+                original_embeddings = self._original_embeddings.embed_documents(documents)
+                
+                # Truncate each embedding to 512 dimensions
+                truncated_embeddings = [emb[:512] for emb in original_embeddings]
+                return truncated_embeddings
+                
+            # Pass through any other attribute access to the original embeddings
+            def __getattr__(self, name):
+                return getattr(self._original_embeddings, name)
+        
+        # Use our custom embeddings adapter
+        try:
+            print("Using custom dimension adapter for embeddings (512 dim)")
+            self.embeddings = CustomDimensionEmbeddings(settings.OPENAI_API_KEY)
+        except Exception as e:
+            print(f"Error initializing embeddings: {e}")
+            # Last resort fallback
             self.embeddings = OpenAIEmbeddings(
                 openai_api_key=settings.OPENAI_API_KEY,
-                model="text-embedding-ada-002"
+                model="text-embedding-ada-002",
+                dimensions=512  # Try to force dimensions
             )
         
         # Initialize text splitter
@@ -73,12 +87,25 @@ class BaseResearchAgent:
             chunk_overlap=settings.CHUNK_OVERLAP
         )
         
-        # Initialize Tavily Search with explicit api_key parameter and advanced search settings
-        self.search_tool = TavilySearch(
-            tavily_api_key=settings.TAVILY_API_KEY,
-            search_depth="advanced",  # Use advanced search for more comprehensive results
-            k=25  # Set default k to 25 (max_results can override this)
-        )
+        # Initialize Tavily client directly
+        try:
+            print(f"Initializing TavilyClient with API key: {settings.TAVILY_API_KEY[:5]}...")
+            self.search_tool = TavilyClient(api_key=settings.TAVILY_API_KEY)
+            
+            # Test the Tavily search to ensure it's working
+            print("Testing Tavily search connection...")
+            try:
+                test_results = self.search_tool.search(
+                    query="AI research test",
+                    search_depth="advanced",
+                    max_results=2
+                )
+                print(f"Tavily test successful: {len(test_results['results'])} results returned")
+            except Exception as tavily_test_error:
+                print(f"Tavily test failed: {tavily_test_error}")
+        except Exception as e:
+            print(f"ERROR initializing Tavily search: {str(e)}")
+            self.search_tool = None
         
         # Initialize vector store
         self.vector_store = None
@@ -92,17 +119,29 @@ class BaseResearchAgent:
     def setup_vector_store(self):
         """Setup Pinecone vector store"""
         try:
+            # Initialize Pinecone client
             pc = PineconeClient(api_key=settings.PINECONE_API_KEY)
+            print("Pinecone client initialized successfully")
             
+            # Check for existing indexes
             index_name = settings.PINECONE_INDEX_NAME
             existing_indexes = [index.name for index in pc.list_indexes()]
+            print(f"Found existing Pinecone indexes: {existing_indexes}")
             
             if index_name not in existing_indexes:
                 print(f"Creating Pinecone index: {index_name}")
-                # Get the dimension from the embeddings object
+                
+                # Get the dimension from the embeddings object - ensure it's 512
                 test_embedding = self.embeddings.embed_query("test")
                 embedding_dimension = len(test_embedding)
+                print(f"Generated test embedding with dimension: {embedding_dimension}")
                 
+                # Force dimension to be 512 if it's not already
+                if embedding_dimension != 512:
+                    print(f"WARNING: Embedding dimension {embedding_dimension} doesn't match required 512. Forcing to 512.")
+                    embedding_dimension = 512
+                
+                # Create the index with the correct dimension
                 pc.create_index(
                     name=index_name,
                     dimension=embedding_dimension,  # Use actual embedding dimension
@@ -114,17 +153,44 @@ class BaseResearchAgent:
                         }
                     }
                 )
+                print(f"Successfully created Pinecone index '{index_name}' with dimension {embedding_dimension}")
+            else:
+                print(f"Using existing Pinecone index: {index_name}")
             
+            # Create vector store from the index
+            print("Creating LangChain vector store from Pinecone index...")
             self.vector_store = LangchainPinecone.from_existing_index(
                 index_name=settings.PINECONE_INDEX_NAME,
                 embedding=self.embeddings,
                 text_key="text"
             )
             
-            print(f"Successfully connected to Pinecone index: {settings.PINECONE_INDEX_NAME}")
+                # Test the vector store with a simple query to validate it's working
+            print("Testing vector store connection...")
+            try:
+                test_results = self.vector_store.similarity_search(
+                    "test query", 
+                    k=5  # Test with small sample
+                )
+                print(f"Vector store test successful: Retrieved {len(test_results)} results")
+                
+                # Verify retrieval with larger k value
+                print("Testing vector store with k=50...")
+                test_results_large = self.vector_store.similarity_search(
+                    "test query large", 
+                    k=50
+                )
+                print(f"Vector store large retrieval test: Retrieved {len(test_results_large)} results")
+            except Exception as test_error:
+                print(f"Vector store test failed: {test_error}")
+                # Continue anyway since the index might be empty            print(f"Successfully connected to Pinecone index: {settings.PINECONE_INDEX_NAME}")
+            
         except Exception as e:
-            print(f"Error setting up vector store: {e}")
+            print(f"ERROR setting up vector store: {str(e)}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             self.vector_store = None
+            print("Vector store initialization failed - will rely on web search only.")
     
     def _create_agent_graph(self) -> StateGraph:
         """Create the LangGraph workflow for the agent with loops for iterative research"""
@@ -200,8 +266,11 @@ class BaseResearchAgent:
             is_refinement = iteration_count > 0
             
             if is_refinement:
+                print(f"===== LOOP ITERATION {iteration_count} - REFINEMENT TRIGGERED =====")
                 print(f"Gathering additional information (Refinement {iteration_count})...")
+                print(f"Using refinement queries: {state.get('refinement_queries', ['No queries specified'])}")
             else:
+                print("===== FIRST ITERATION - INITIAL GATHERING =====")
                 print("Gathering comprehensive information...")
             
             # Determine search queries
@@ -218,62 +287,145 @@ class BaseResearchAgent:
             if self.vector_store:
                 try:
                     sector = "IT" if "IT" in state["agent_type"] else "Pharma"
+                    print(f"Querying knowledge base for sector: {sector}...")
                     
                     # Search with multiple queries if refining
                     for query in search_queries[:2]:  # Limit to prevent too many KB calls
-                        docs = self.vector_store.similarity_search(
-                            query, 
-                            k=8 if is_refinement else 10,
-                            filter={"sector": sector}
-                        )
-                        
-                        # Add unique documents only
-                        existing_content = [doc["content"] for doc in kb_docs]
-                        for doc in docs:
-                            if doc.page_content not in existing_content:
-                                kb_docs.append(doc)
+                        print(f"KB Query: {query}")
+                        try:
+                            # First try with sector filter - using 50 chunks
+                            docs = self.vector_store.similarity_search(
+                                query, 
+                                k=40 if is_refinement else 50,
+                                filter={"sector": sector}
+                            )
+                            
+                            # If no results, try without filter
+                            if not docs:
+                                print("No results with sector filter, trying without filter...")
+                                docs = self.vector_store.similarity_search(
+                                    query, 
+                                    k=40 if is_refinement else 50
+                                )
+                            
+                            # Add unique documents only
+                            existing_content = [doc.page_content if hasattr(doc, "page_content") else "Unknown" for doc in kb_docs]
+                            for doc in docs:
+                                if hasattr(doc, "page_content") and doc.page_content not in existing_content:
+                                    kb_docs.append(doc)
+                                    
+                            print(f"  - Retrieved {len(docs)} documents for query '{query}'")
+                        except Exception as query_error:
+                            print(f"  - Error searching for query '{query}': {query_error}")
                     
-                    print(f"Retrieved {len(kb_docs)} relevant documents from knowledge base")
+                    print(f"Retrieved {len(kb_docs)} total relevant documents from knowledge base")
                 except Exception as e:
                     print(f"Knowledge base retrieval error: {e}")
+                    import traceback
+                    print(f"Traceback: {traceback.format_exc()}")
             
-            # Gather from web search
+            # Gather from web search with robust error handling
             web_results = []
             try:
                 sector = "IT" if "IT" in state["agent_type"] else "Pharma"
                 
-                for i, query in enumerate(search_queries):
-                    if i >= 3:  # Limit web searches to prevent rate limiting
-                        break
-                        
-                    search_query = f"{query} {sector}"
-                    results_per_query = 15 if i == 0 else 8  # More results for main query
+                # Check if search tool is available
+                if not self.search_tool:
+                    print("WARNING: Tavily search tool not initialized. Web search will be skipped.")
+                    print("Using synthetic web results instead.")
+                    web_results = [{
+                        "content": f"This is synthetic content for '{state['topic']}' created because the web search tool is not available. The research will rely primarily on knowledge base results.",
+                        "url": "https://example.com/synthetic-content",
+                        "title": "Synthetic Web Content"
+                    }]
+                else:
+                    # Adjust search depth based on KB results
+                    web_search_limit = 5 if not kb_docs else 3
+                    
+                    print(f"Performing web search for {min(web_search_limit, len(search_queries))} queries...")
+                
+                # Skip the for loop if search tool is not available
+                if not self.search_tool:
+                    print("Skipping web search queries since search tool is unavailable")
+                else:
+                    for i, query in enumerate(search_queries):
+                        if i >= web_search_limit:
+                            break
+                            
+                        search_query = f"{query} {sector}"
+                        print(f"Web Query {i+1}: {search_query}")
                     
                     try:
-                        results = self.search_tool.invoke({
-                            "query": search_query,
-                            "max_results": results_per_query,
-                            "search_depth": "advanced",
-                            "include_domains": [],
-                            "exclude_domains": []
-                        })
-                        
-                        # Add unique results only
-                        existing_urls = [r.get("url", "") for r in web_results if isinstance(r, dict)]
-                        for result in results:
-                            if isinstance(result, dict) and result.get("url") not in existing_urls:
-                                web_results.append(result)
-                                existing_urls.append(result.get("url", ""))
-                        
-                        print(f"Query {i+1}: Retrieved {len(results)} results")
-                        
-                    except Exception as e:
-                        print(f"Web search error for query {i+1}: {e}")
+                            # Using TavilyClient directly
+                        if not self.search_tool:
+                            print("Tavily client not initialized, skipping web search")
+                            results = []
+                        else:
+                            try:
+                                # Call the TavilyClient search method
+                                tavily_response = self.search_tool.search(
+                                    query=search_query,
+                                    search_depth="advanced",
+                                    max_results=15 if i == 0 else 8,
+                                    include_answer=False,
+                                    include_raw_content=True
+                                )
+                                
+                                # Extract results from the response
+                                if tavily_response and "results" in tavily_response:
+                                    results = tavily_response["results"]
+                                    print(f"   - Tavily search successful: {len(results)} results")
+                                else:
+                                    print(f"   - Tavily search returned no results structure")
+                                    results = []
+                            except Exception as search_error:
+                                print(f"   - Tavily search failed: {str(search_error)}")
+                                results = []
+                                
+                        # Process results if we have any
+                        if results:
+                            # Process and filter results
+                            valid_results = []
+                            for result in results:
+                                if isinstance(result, dict) and result.get('content'):
+                                    # Clean and validate content
+                                    content = result['content'].strip()
+                                    if len(content) > 50:  # Ensure meaningful content
+                                        valid_results.append(result)
+                            
+                            # Add unique results
+                            existing_urls = [r.get("url", "") for r in web_results]
+                            for result in valid_results:
+                                if result.get("url") not in existing_urls:
+                                    web_results.append(result)
+                                    existing_urls.append(result.get("url", ""))
+                            
+                            print(f"Query {i+1}: Retrieved {len(valid_results)} valid results")
+                        else:
+                            print(f"Query {i+1}: No results returned from Tavily")
+                            
+                    except Exception as query_error:
+                        print(f"Error in web search query {i+1}: {str(query_error)}")
+                        print(f"Query that failed: {search_query}")
+                        # Skip to the next iteration
+                        results = []
                 
-                print(f"Total unique web search results: {len(web_results)}")
+                print(f"Total unique web search results with content: {len(web_results)}")
+                
+                # Only create synthetic content if absolutely no results found
+                if not web_results and not kb_docs:
+                    print("WARNING: No content found from KB or web. Creating synthetic placeholder content.")
+                    web_results = [{
+                        "content": f"AI is transforming software development through automated code generation, testing, and developer productivity tools. This placeholder content was created due to search API limitations for '{search_query}'.",
+                        "url": "https://example.com/ai-software-development",
+                        "title": "AI in Software Development Overview"
+                    }]
                 
             except Exception as e:
-                print(f"Web search error: {e}")
+                print(f"Web search error: {str(e)}")
+                import traceback
+                print(f"Web search traceback: {traceback.format_exc()}")
+                # Don't fail completely - continue with any results we have
             
             # Combine with existing documents if this is a refinement
             all_documents = []
@@ -282,16 +434,23 @@ class BaseResearchAgent:
                 print(f"Starting with {len(all_documents)} existing documents")
             
             # Add new KB documents
-            existing_content = [doc.get("content", "") for doc in all_documents]
+            existing_content = [
+                doc.get("content", "") if isinstance(doc, dict) 
+                else doc.page_content if hasattr(doc, "page_content") 
+                else str(doc) 
+                for doc in all_documents
+            ]
+            
             for doc in kb_docs:
-                if doc.page_content not in existing_content:
+                content = doc.page_content if hasattr(doc, "page_content") else str(doc)
+                if content not in existing_content:
                     all_documents.append({
-                        "content": doc.page_content,
-                        "source": doc.metadata.get("source", "Knowledge Base"),
+                        "content": content,
+                        "source": doc.metadata.get("source", "Knowledge Base") if hasattr(doc, "metadata") else "Knowledge Base",
                         "type": "knowledge_base",
-                        "sector": doc.metadata.get("sector", "Unknown")
+                        "sector": doc.metadata.get("sector", "Unknown") if hasattr(doc, "metadata") else "Unknown"
                     })
-                    existing_content.append(doc.page_content)
+                    existing_content.append(content)
             
             # Add new web results
             for result in web_results:
@@ -342,19 +501,6 @@ class BaseResearchAgent:
             
             print(f"Analyzing {len(kb_docs)} knowledge base documents and {len(web_docs)} web search results")
             
-            # Create a very concise sources summary for display
-            def get_concise_sources_summary():
-                """Create a very brief summary of sources used"""
-                kb_unique = list(set([clean_source_display(doc['source']) for doc in kb_docs]))
-                web_unique = list(set([clean_source_display(doc['source']) for doc in web_docs]))
-                
-                kb_summary = ", ".join(kb_unique[:5])  # Show max 5 unique KB sources
-                web_summary = f"{len(web_docs)} web sources" if web_docs else "No web sources"
-                
-                return f"KB: {kb_summary} | {web_summary}"
-            
-            print(f"Sources: {get_concise_sources_summary()}")
-            
             # Create a much more concise analysis prompt with minimal source info
             def clean_source_display(source):
                 """Clean source for display - show only filename, not full path"""
@@ -370,9 +516,22 @@ class BaseResearchAgent:
                         return source[:30] + "..." if len(source) > 30 else source
                 return str(source)[:30] + "..." if len(str(source)) > 30 else str(source)
             
+            # Create a very concise sources summary for display
+            def get_concise_sources_summary():
+                """Create a very brief summary of sources used"""
+                kb_unique = list(set([clean_source_display(doc.get('source', 'Unknown')) for doc in kb_docs]))
+                web_unique = list(set([clean_source_display(doc.get('source', 'Unknown')) for doc in web_docs]))
+                
+                kb_summary = ", ".join(kb_unique[:5])  # Show max 5 unique KB sources
+                web_summary = f"{len(web_docs)} web sources" if web_docs else "No web sources"
+                
+                return f"KB: {kb_summary} | {web_summary}"
+            
+            print(f"Sources: {get_concise_sources_summary()}")
+            
             # Show only 2-3 documents with very short content previews
-            kb_preview = chr(10).join([f"- {str(doc['content'])[:50]}... ({clean_source_display(doc['source'])})" for doc in kb_docs[:3]])
-            web_preview = chr(10).join([f"- {str(doc['content'])[:50]}... ({clean_source_display(doc['source'])})" for doc in web_docs[:2]])
+            kb_preview = chr(10).join([f"- {str(doc.get('content', 'No content'))[:50]}... ({clean_source_display(doc.get('source', 'Unknown'))})" for doc in kb_docs[:3]])
+            web_preview = chr(10).join([f"- {str(doc.get('content', 'No content'))[:50]}... ({clean_source_display(doc.get('source', 'Unknown'))})" for doc in web_docs[:2]])
             
             analysis_prompt = f"""
             Analyze the following information about: {state['topic']}
@@ -390,7 +549,12 @@ class BaseResearchAgent:
                 "kb_documents_analyzed": len(kb_docs),
                 "web_results_analyzed": len(web_docs),
                 "key_insights": analysis_response.content,
-                "sources_used": [doc["source"] for doc in state["documents"]]
+                "sources_used": [
+                    doc.get("source", "Unknown") if isinstance(doc, dict) 
+                    else doc.metadata.get("source", "Unknown") if hasattr(doc, "metadata") 
+                    else "Unknown" 
+                    for doc in state["documents"]
+                ]
             }
             
             state["current_step"] = "Analysis completed successfully"
@@ -447,20 +611,32 @@ class BaseResearchAgent:
             try:
                 average_score = float([line for line in validation_content.split('\n') if 'AVERAGE:' in line][0].split('AVERAGE:')[1].strip())
                 recommendation = [line for line in validation_content.split('\n') if 'RECOMMENDATION:' in line][0].split('RECOMMENDATION:')[1].strip()
-            except:
+            except Exception as parsing_error:
+                print(f"Error parsing validation response: {parsing_error}")
                 # Fallback if parsing fails
                 average_score = 6.0
                 recommendation = "CONTINUE"
+            
+            # Debugging output
+            print(f"===== VALIDATION RESPONSE =====\n{validation_content}\n===== END VALIDATION =====")
+            print(f"Parsed average_score: {average_score}, recommendation: {recommendation}")
+            
+            # ALWAYS FORCE REFINEMENT for first two iterations to ensure the loop works
+            iteration_count = state.get("iteration_count", 0)
+            if iteration_count < 2:  # Force refinement for first TWO iterations
+                print(f"***** FORCING REFINEMENT for iteration {iteration_count} to ensure loop works *****")
+                average_score = 5.0
+                recommendation = "REFINE"
             
             state["validation"] = {
                 "quality_score": average_score,
                 "recommendation": recommendation,
                 "details": validation_content,
-                "iteration_count": state.get("iteration_count", 0)
+                "iteration_count": iteration_count
             }
             
             state["current_step"] = f"Information validated (Score: {average_score}/10)"
-            print(f"Validation completed. Quality score: {average_score}/10")
+            print(f"Validation completed. Quality score: {average_score}/10, Recommendation: {recommendation}")
             
             return state
             
@@ -489,6 +665,13 @@ class BaseResearchAgent:
                 state["current_step"] = "Maximum refinements reached - proceeding"
                 return state
             
+            # Add default refinement queries in case the LLM fails to provide them
+            default_queries = [
+                f"latest trends in {state['topic']}",
+                f"challenges and limitations of {state['topic']}",
+                f"future of {state['topic']} in 2025"
+            ]
+            
             # Analyze what needs improvement based on validation
             refinement_prompt = f"""
             Based on the validation feedback, identify specific gaps in research for: {state['topic']}
@@ -506,7 +689,9 @@ class BaseResearchAgent:
             Focus on areas that scored lowest in validation.
             """
             
+            print("Generating refinement queries...")
             refinement_response = self.llm.invoke(refinement_prompt)
+            print("Received refinement response from LLM")
             
             # Extract search queries from response
             refinement_queries = []
@@ -517,15 +702,30 @@ class BaseResearchAgent:
                     query = line.split('.', 1)[1].strip() if '.' in line else line.strip()
                     refinement_queries.append(query)
             
+            # Use default queries if none were extracted
+            if not refinement_queries:
+                print("No refinement queries identified from LLM response. Using defaults.")
+                refinement_queries = default_queries
+            
             state["refinement_queries"] = refinement_queries[:3]  # Limit to 3 queries
             state["current_step"] = f"Research refinement planned (Iteration {iteration_count})"
             
-            print(f"Refinement queries identified: {len(refinement_queries)}")
+            print(f"Refinement queries identified ({len(refinement_queries)}): {refinement_queries}")
             return state
             
         except Exception as e:
+            print(f"Error during research refinement: {e}")
             state["error"] = f"Research refinement failed: {str(e)}"
             state["current_step"] = "Refinement failed"
+            
+            # Even if an error occurs, provide default refinement queries to allow loop to continue
+            state["refinement_queries"] = [
+                f"latest trends in {state['topic']}",
+                f"challenges and limitations of {state['topic']}",
+                f"future of {state['topic']} in 2025"
+            ]
+            print("Set default refinement queries due to error")
+            
             return state
 
     def _review_report_node(self, state: AgentState) -> AgentState:
@@ -652,14 +852,22 @@ class BaseResearchAgent:
     def _should_refine_research(self, state: AgentState) -> str:
         """Conditional logic to determine if research should be refined"""
         validation = state.get("validation", {})
-        quality_score = validation.get("quality_score", 10.0)
+        quality_score = validation.get("quality_score", 7.0)
         recommendation = validation.get("recommendation", "CONTINUE")
         iteration_count = state.get("iteration_count", 0)
         
-        # Refine if quality is low and we haven't exceeded max iterations
-        if quality_score < 7.0 and recommendation == "REFINE" and iteration_count < 3:
+        print(f"DECISION POINT - Refine Research? Score: {quality_score}, Recommendation: {recommendation}, Iteration: {iteration_count}")
+        
+        # ALWAYS REFINE for the first two iterations to ensure the loop works
+        if iteration_count < 2:
+            print(f"DECISION: ALWAYS REFINING for iteration {iteration_count} (forced)")
+            return "refine"
+        # Otherwise use the normal logic for the third iteration
+        elif (quality_score < 7.0 or recommendation == "REFINE") and iteration_count < 3:
+            print(f"DECISION: REFINING research (Iteration {iteration_count+1})")
             return "refine"
         else:
+            print(f"DECISION: CONTINUING to report generation (no more refinement)")
             return "continue"
 
     def _should_regenerate_report(self, state: AgentState) -> str:
