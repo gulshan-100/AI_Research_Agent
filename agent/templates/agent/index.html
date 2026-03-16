@@ -688,6 +688,89 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Research Journey Timeline styling */
+        .research-journey {
+            background-color: #f8f9fc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-light);
+        }
+        
+        .journey-timeline {
+            position: relative;
+            padding: 20px 0;
+            margin-left: 30px;
+        }
+        
+        .journey-timeline:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15px;
+            height: 100%;
+            width: 2px;
+            background: rgba(var(--primary-rgb), 0.3);
+            border-radius: 2px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 45px;
+            padding-bottom: 25px;
+        }
+        
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+            z-index: 1;
+        }
+        
+        .timeline-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .subtopics-container {
+            margin-top: 20px;
+        }
+        
+        .subtopics-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .iterations-info {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .iterations-info .badge {
+            padding: 8px 12px;
+            font-size: 1rem;
+        }
+        
         .alert {
             border-radius: 10px;
             border: none;
@@ -1121,49 +1204,51 @@
                         </button>
                     </div>
                 </div>
+                
+            </div>
+            
+            <!-- Research Guidance Section (will be shown during research) -->
+            <div class="research-form" id="researchGuidanceContainer" style="display: none;">
+                <h3 class="mb-3"><i class="fas fa-compass me-2"></i>Research Guidance</h3>
+                <p>The agent has identified these areas for deeper research. Select which directions to pursue:</p>
+                
+                <div class="subtopics-container mb-4" id="guidanceSubtopicsContainer">
+                    <!-- Subtopics will be inserted here -->
+                </div>
+                
+                <div class="mb-3">
+                    <label for="customQueries" class="form-label">Custom Research Queries (optional)</label>
+                    <textarea class="form-control" id="customQueries" rows="2" 
+                              placeholder="Enter specific questions you'd like to research..."></textarea>
+                </div>
+                
+                <div class="guidance-actions">
+                    <button class="btn btn-primary me-2" onclick="provideFeedback('deep_dive')">
+                        <i class="fas fa-microscope me-1"></i> Deep Dive Selected Topics
+                    </button>
+                    <button class="btn btn-secondary me-2" onclick="provideFeedback('refine')">
+                        <i class="fas fa-sync-alt me-1"></i> Refine Current Research
+                    </button>
+                    <button class="btn btn-success" onclick="provideFeedback('complete')">
+                        <i class="fas fa-check me-1"></i> Complete Research
+                    </button>
+                </div>
+                
+                <!-- Hidden fields for guidance context -->
+                <input type="hidden" id="guidanceTopic">
+                <input type="hidden" id="guidanceAgentType">
+                <input type="hidden" id="guidanceThreadId">
             </div>
             
             <!-- Progress Section -->
             <div class="progress-section" id="progressSection">
-                <h3 class="progress-title">Researching your topic...</h3>
-                
-                <div class="progress-stages">
-                    <div class="progress-stage" id="stage1">
-                        <div class="progress-icon">
-                            <i class="fas fa-tasks"></i>
-                        </div>
-                        <div class="progress-label">Planning Research</div>
+                <div class="d-flex align-items-center justify-content-center flex-column">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                    
-                    <div class="progress-stage" id="stage2">
-                        <div class="progress-icon">
-                            <i class="fas fa-search"></i>
-                        </div>
-                        <div class="progress-label">Gathering Information</div>
+                    <div class="text-center" id="statusText">
+                        <h4 class="mb-3">Researching...</h4>
                     </div>
-                    
-                    <div class="progress-stage" id="stage3">
-                        <div class="progress-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="progress-label">Analyzing Data</div>
-                    </div>
-                    
-                    <div class="progress-stage" id="stage4">
-                        <div class="progress-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div class="progress-label">Generating Report</div>
-                    </div>
-                </div>
-                
-                <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: 0%"></div>
-                </div>
-                
-                <div class="status-text" id="statusText">
-                    <i class="fas fa-sync-alt fa-spin me-2"></i>
-                    Initializing research...
                 </div>
             </div>
             
@@ -1292,6 +1377,15 @@
                 return;
             }
             
+            // Get research parameters
+            // Removed maxIterations and allowDeepDives controls
+            
+            // Generate thread ID for this research session
+            const threadId = `research_${Date.now()}`;
+            
+            // Update max iterations badge
+            // Removed maxIterationsBadge update
+            
             // Disable button and show progress
             const researchBtn = document.getElementById('researchBtn');
             researchBtn.disabled = true;
@@ -1307,19 +1401,27 @@
             document.getElementById('progressSection').classList.add('active');
             document.getElementById('resultsSection').classList.remove('active');
             
-            // Start progress simulation
+            // Hide the guidance container
+            document.getElementById('researchGuidanceContainer').style.display = 'none';
+            
+            // Start progress monitoring
+            startProgressMonitoring(topic, selectedAgent, threadId);
+            
+            // Start progress simulation for initial stages
             startProgressSimulation();
             
             try {
                 // Make API call to backend
-                const response = await fetch('/research/', {
+                const response = await fetch('/agent/research/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         topic: topic,
-                        agent_choice: selectedAgent
+                        agent_choice: selectedAgent,
+                        // Removed max_iterations and allow_deep_dives from payload
+                        thread_id: threadId
                     })
                 });
                 
@@ -1349,54 +1451,220 @@
             }
         }
         
-        // Start progress simulation
-        function startProgressSimulation() {
-            currentProgress = 0;
-            const progressBar = document.querySelector('.progress-bar');
-            const statusText = document.getElementById('statusText');
+        // Monitor research progress
+        function startProgressMonitoring(topic, agentType, threadId) {
+            // Initialize monitoring variables
+            const journeyContainer = document.getElementById('journeyContainer');
+            const journeyTimeline = document.getElementById('journeyTimeline');
+            const subtopicsBadges = document.getElementById('subtopicsBadges');
             
-            const progressSteps = [
-                { progress: 15, text: 'Planning research approach...', stage: 1 },
-                { progress: 25, text: 'Formulating research questions...', stage: 1 },
-                { progress: 35, text: 'Gathering information from web...', stage: 2 },
-                { progress: 50, text: 'Retrieving knowledge base documents...', stage: 2 },
-                { progress: 65, text: 'Analyzing collected information...', stage: 3 },
-                { progress: 80, text: 'Synthesizing findings...', stage: 3 },
-                { progress: 90, text: 'Generating comprehensive report...', stage: 4 }
-            ];
+            // Clear previous journey data
+            journeyTimeline.innerHTML = '';
+            subtopicsBadges.innerHTML = '';
             
-            let stepIndex = 0;
+            // Show journey container
+            journeyContainer.style.display = 'block';
             
-            clearInterval(progressInterval);
-            progressInterval = setInterval(() => {
-                if (currentProgress >= 95) {
-                    clearInterval(progressInterval);
-                    return;
-                }
-                
-                currentProgress += 0.5;
-                progressBar.style.width = currentProgress + '%';
-                
-                // Update status text at certain progress points
-                if (stepIndex < progressSteps.length && currentProgress >= progressSteps[stepIndex].progress) {
-                    statusText.innerHTML = `<i class="fas fa-sync-alt fa-spin me-2"></i>${progressSteps[stepIndex].text}`;
-                    
-                    // Update stages
-                    document.querySelectorAll('.progress-stage').forEach(stage => {
-                        stage.classList.remove('active');
+            // Start monitoring loop
+            const monitoringInterval = setInterval(async function() {
+                try {
+                    // Fetch status from server
+                    const response = await fetch('/agent/status/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            topic: topic,
+                            agent_type: agentType,
+                            thread_id: threadId
+                        })
                     });
                     
-                    // Complete previous stages
-                    for (let i = 1; i < progressSteps[stepIndex].stage; i++) {
-                        document.getElementById(`stage${i}`).classList.add('completed');
+                    const data = await response.json();
+                    
+                    if (data.success && data.research_progress) {
+                        const progress = data.research_progress;
+                        
+                        // Update status text
+                        document.getElementById('statusText').innerHTML = `
+                            <i class="fas fa-sync-alt fa-spin me-2"></i>
+                            ${progress.current_step || 'Processing...'}
+                        `;
+                        
+                        // Update iteration badge
+                        document.getElementById('currentIterationBadge').textContent = progress.iteration || '1';
+                        
+                        // Calculate progress percentage
+                        const percentComplete = Math.min(Math.round((progress.iteration / progress.total_iterations) * 80) + 10, 95);
+                        document.querySelector('.progress-bar').style.width = `${percentComplete}%`;
+                        
+                        // Update active stage
+                        updateActiveStage(progress.current_step);
+                        
+                        // Update journey visualization
+                        if (progress.research_journey && progress.research_journey.length > 0) {
+                            updateJourneyVisualization(progress.research_journey);
+                        }
+                        
+                        // Update explored subtopics
+                        if (progress.explored_subtopics && progress.explored_subtopics.length > 0) {
+                            subtopicsBadges.innerHTML = '';
+                            progress.explored_subtopics.forEach(subtopic => {
+                                const badge = document.createElement('span');
+                                badge.className = 'badge bg-info me-2 mb-2';
+                                badge.innerHTML = `<i class="fas fa-tag me-1"></i>${subtopic}`;
+                                subtopicsBadges.appendChild(badge);
+                            });
+                        }
+                        
+                        // Check if we need to show guidance
+                        if (progress.current_step.includes('Analyzing') && 
+                            progress.iteration > 0 && progress.iteration < progress.total_iterations) {
+                            showResearchGuidance(topic, agentType, threadId);
+                        }
+                        
+                        // Check if research is completed
+                        if (progress.current_step.includes('Report generated') || 
+                            progress.current_step.includes('completed')) {
+                            clearInterval(monitoringInterval);
+                        }
                     }
-                    
-                    // Activate current stage
-                    document.getElementById(`stage${progressSteps[stepIndex].stage}`).classList.add('active');
-                    
-                    stepIndex++;
+                } catch (error) {
+                    console.error('Error monitoring research:', error);
                 }
-            }, 100);
+            }, 3000); // Check every 3 seconds
+            
+            // Store interval ID to clear it later
+            window.currentMonitoringInterval = monitoringInterval;
+        }
+        
+        // Show research guidance
+        function showResearchGuidance(topic, agentType, threadId) {
+            // Get guidance container and ensure it's not already shown
+            const guidanceContainer = document.getElementById('researchGuidanceContainer');
+            if (guidanceContainer.style.display === 'block') {
+                return; // Already showing guidance
+            }
+            
+            // Store guidance context
+            document.getElementById('guidanceTopic').value = topic;
+            document.getElementById('guidanceAgentType').value = agentType;
+            document.getElementById('guidanceThreadId').value = threadId;
+            
+            // Generate suggested subtopics based on the topic
+            const subtopicsContainer = document.getElementById('guidanceSubtopicsContainer');
+            subtopicsContainer.innerHTML = '';
+            
+            // Generate potential subtopics from the main topic
+            const subtopics = generateSubtopicsFromTopic(topic);
+            
+            // Create UI for subtopics
+            subtopics.forEach(subtopic => {
+                const subtopicDiv = document.createElement('div');
+                subtopicDiv.className = 'form-check mb-2';
+                subtopicDiv.innerHTML = `
+                    <input class="form-check-input subtopic-checkbox" type="checkbox" value="${subtopic}" 
+                           id="subtopic-${subtopic.replace(/\s+/g, '-')}">
+                    <label class="form-check-label" for="subtopic-${subtopic.replace(/\s+/g, '-')}">
+                        ${subtopic}
+                    </label>
+                `;
+                subtopicsContainer.appendChild(subtopicDiv);
+            });
+            
+            // Show guidance container
+            guidanceContainer.style.display = 'block';
+        }
+        
+        // Generate subtopics from a main topic
+        function generateSubtopicsFromTopic(topic) {
+            // Split the topic into words
+            const words = topic.split(' ');
+            const subtopics = [];
+            
+            // Generate a few subtopics based on the words in the topic
+            if (words.length > 2) {
+                subtopics.push(`${words[0]} ${words[1]} - latest developments`);
+                subtopics.push(`${words[words.length-2]} ${words[words.length-1]} - in-depth analysis`);
+            }
+            
+            // Add some general subtopics
+            subtopics.push(`${topic} - market analysis`);
+            subtopics.push(`${topic} - future trends`);
+            subtopics.push(`${topic} - case studies`);
+            subtopics.push(`${topic} - challenges and limitations`);
+            
+            return subtopics;
+        }
+        
+        // Provide feedback for research direction
+        function provideFeedback(feedbackType) {
+            // Get feedback context
+            const topic = document.getElementById('guidanceTopic').value;
+            const agentType = document.getElementById('guidanceAgentType').value;
+            const threadId = document.getElementById('guidanceThreadId').value;
+            
+            // Get selected subtopics
+            const selectedSubtopics = [];
+            document.querySelectorAll('.subtopic-checkbox:checked').forEach(checkbox => {
+                selectedSubtopics.push(checkbox.value);
+            });
+            
+            // Get custom queries
+            const customQueries = document.getElementById('customQueries').value
+                .split('\n')
+                .map(q => q.trim())
+                .filter(q => q.length > 0);
+            
+            // Validate input based on feedback type
+            if (feedbackType === 'deep_dive' && selectedSubtopics.length === 0) {
+                showAlert('Please select at least one subtopic for deep dive research', 'warning');
+                return;
+            }
+            
+            // Hide the guidance container
+            document.getElementById('researchGuidanceContainer').style.display = 'none';
+            
+            // Update status
+            document.getElementById('statusText').innerHTML = `
+                <i class="fas fa-sync-alt fa-spin me-2"></i>
+                Applying your research guidance...
+            `;
+            
+            // Send feedback to backend
+            fetch('/agent/feedback/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    agent_type: agentType,
+                    thread_id: threadId,
+                    feedback_type: feedbackType,
+                    selected_subtopics: selectedSubtopics,
+                    custom_queries: customQueries
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`Research guidance applied: ${feedbackType}`, 'success');
+                } else {
+                    showAlert(`Failed to apply guidance: ${data.error}`, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error providing feedback:', error);
+                showAlert('Error sending research guidance', 'danger');
+            });
+        }
+        
+        // Start progress simulation
+        function startProgressSimulation() {
+            document.getElementById('progressSection').classList.add('active');
+            document.getElementById('statusText').innerHTML = '<h4 class="mb-3">Researching...</h4>';
         }
         
         // Stop progress simulation
@@ -1500,6 +1768,96 @@
             setTimeout(() => {
                 resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 300);
+            
+            // Clear any monitoring interval
+            if (window.currentMonitoringInterval) {
+                clearInterval(window.currentMonitoringInterval);
+            }
+        }
+        
+        // Update journey visualization with research steps
+        function updateJourneyVisualization(journeySteps) {
+            const journeyTimeline = document.getElementById('journeyTimeline');
+            
+            // Clear previous timeline if it's a fresh update
+            if (journeySteps.length > journeyTimeline.children.length) {
+                journeyTimeline.innerHTML = '';
+                
+                // Create timeline items
+                journeySteps.forEach((step, index) => {
+                    // Create timeline item
+                    const timelineItem = document.createElement('div');
+                    timelineItem.className = 'timeline-item';
+                    
+                    // Add timeline marker
+                    const marker = document.createElement('div');
+                    marker.className = 'timeline-marker';
+                    marker.innerHTML = `<span>${index + 1}</span>`;
+                    timelineItem.appendChild(marker);
+                    
+                    // Add timeline content
+                    const content = document.createElement('div');
+                    content.className = 'timeline-content';
+                    
+                    // Format the step content
+                    let stepText = step;
+                    if (typeof step === 'object') {
+                        // If step is an object with iteration info
+                        stepText = `<strong>Iteration ${step.iteration || '?'}</strong>: ${step.action || step.description || 'Research step'}`;
+                    }
+                    
+                    content.innerHTML = stepText;
+                    timelineItem.appendChild(content);
+                    
+                    // Add to timeline
+                    journeyTimeline.appendChild(timelineItem);
+                });
+            }
+        }
+        
+        // Update active stage in the progress workflow
+        function updateActiveStage(currentStep) {
+            // Define stage keywords
+            const stageKeywords = {
+                'stage1': ['Starting', 'Processing', 'Initializing'],
+                'stage2': ['Collecting', 'Retrieving', 'Searching'],
+                'stage3': ['Analyzing', 'Processing', 'Evaluating'],
+                'stageRefine': ['Refining', 'Adjusting', 'Improving'],
+                'stageDeepDive': ['Deep dive', 'Exploring', 'Investigating'],
+                'stage4': ['Generating', 'Creating', 'Finalizing']
+            };
+            
+            // Find the active stage based on keywords
+            let activeStageId = null;
+            for (const [stageId, keywords] of Object.entries(stageKeywords)) {
+                if (keywords.some(keyword => currentStep.includes(keyword))) {
+                    activeStageId = stageId;
+                }
+            }
+            
+            if (activeStageId) {
+                // Mark all previous stages as completed
+                const stages = document.querySelectorAll('.progress-stage');
+                let foundActive = false;
+                
+                stages.forEach(stage => {
+                    // Reset all stages
+                    stage.classList.remove('active');
+                    
+                    if (foundActive) {
+                        // After active stage, remove completed class
+                        stage.classList.remove('completed');
+                    } else if (stage.id === activeStageId) {
+                        // Active stage
+                        stage.classList.add('active');
+                        foundActive = true;
+                    } else {
+                        // Stages before active stage
+                        stage.classList.add('completed');
+                        stage.classList.remove('active');
+                    }
+                });
+            }
         }
         
         // Enhanced markdown to HTML converter

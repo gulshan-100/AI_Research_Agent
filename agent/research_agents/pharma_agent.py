@@ -20,9 +20,16 @@ class PharmaResearchAgent(BaseResearchAgent):
     def __init__(self):
         super().__init__()
         self.domain = "Pharmaceutical"
+        # Enhanced list of specialized sources for pharmaceutical research
         self.specialized_sources = [
             "pubmed.ncbi.nlm.nih.gov", "clinicaltrials.gov", 
-            "who.int", "nih.gov", "fda.gov"
+            "who.int", "nih.gov", "fda.gov", "cdc.gov",
+            "nejm.org", "thelancet.com", "bmj.com",
+            "sciencedirect.com", "nature.com", "cell.com",
+            "pnas.org", "jamanetwork.com", "accessdata.fda.gov",
+            "ema.europa.eu", "drug.gov", "pharmacytimes.com",
+            "fiercepharma.com", "biopharmadive.com", "statnews.com",
+            "raps.org", "phrma.org", "pharmaceutical-journal.com"
         ]
     
     def plan_research(self, topic: str) -> ResearchPlan:

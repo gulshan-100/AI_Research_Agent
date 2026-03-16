@@ -142,6 +142,13 @@ LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY")
 PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT", "us-east-1")  # Just the region, not the full URL
 PINECONE_INDEX_NAME = os.environ.get("PINECONE_INDEX_NAME", "researchagent")
 
+# Research Agent Parameters
+MAX_RESEARCH_DEPTH = int(os.environ.get("MAX_RESEARCH_DEPTH", "3"))  # Maximum number of research iterations
+MAX_DEEP_DIVES = int(os.environ.get("MAX_DEEP_DIVES", "2"))  # Maximum number of deep dives into subtopics
+MIN_DOCUMENTS_PER_ITERATION = int(os.environ.get("MIN_DOCUMENTS_PER_ITERATION", "5"))  # Minimum documents per iteration
+CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))  # Size of document chunks
+CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))  # Overlap between chunks
+
 LANGSMITH_TRACING = os.environ.get("LANGSMITH_TRACING", "true")
 LANGSMITH_ENDPOINT = os.environ.get("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
 LANGSMITH_PROJECT = os.environ.get("LANGSMITH_PROJECT", "ai-research-agent")

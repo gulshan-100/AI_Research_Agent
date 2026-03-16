@@ -32,10 +32,8 @@ langchain-openai==0.3.32
 langchain-pinecone==0.2.12
 langchain-tavily==0.2.11
 langchain-text-splitters==0.3.11
-langgraph==0.6.6
-langgraph-checkpoint==2.1.1
-langgraph-prebuilt==0.6.4
-langgraph-sdk==0.2.4
+langgraph==0.0.20
+langgraph-prebuilt==0.0.20
 langsmith==0.4.21
 marshmallow==3.26.1
 multidict==6.6.4

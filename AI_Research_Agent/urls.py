@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("agent.urls")),  # Include agent app URLs
+    path("", include("agent.urls")),  # Root URLs
+    path("agent/", include("agent.urls")),  # Include agent URLs with agent/ prefix
 ]

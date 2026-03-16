@@ -1,0 +1,131 @@
+{
+  "IT": {
+    "What are the major trends in the Indian IT industry?": {
+      "precision@k": 0.2,
+      "recall@k": 0.3333333333333333,
+      "mrr": 0.5,
+      "ndcg@k": 0.6309297535714575,
+      "latency": 6.96733546257019,
+      "retrieved_docs": [
+        "technology-sector-trends-and-priorities.pdf",
+        "IT-industry-outlook-aug23.pdf",
+        "it-_ites_report_28_jan.pdf",
+        "technology-sector-trends-and-priorities.pdf",
+        "The Evolution and Growth-2882.pdf"
+      ],
+      "relevant_docs": [
+        "IT-industry-outlook-aug23.pdf",
+        "INTRODUCTION-TO-INDIAN-SOFTWARE-INDUSTRY-IN-GLOBAL-PERSPECTIV.pdf",
+        "Indian ICT Sectorial System of Innovation (IISSI) Report_0.pdf"
+      ]
+    },
+    "What is the size of Indian IT market?": {
+      "precision@k": 0.2,
+      "recall@k": 0.3333333333333333,
+      "mrr": 0.3333333333333333,
+      "ndcg@k": 0.5,
+      "latency": 4.811997652053833,
+      "retrieved_docs": [
+        "informationtechnology.pdf",
+        "The Evolution and Growth-2882.pdf",
+        "it-_ites_report_28_jan.pdf",
+        "27.pdf",
+        "27.pdf"
+      ],
+      "relevant_docs": [
+        "it-and-ites-sector-risk-report-2022.pdf",
+        "it-_ites_report_28_jan.pdf",
+        "IT-industry-outlook-aug23.pdf"
+      ]
+    },
+    "What are the challenges faced by Indian IT companies?": {
+      "precision@k": 0.0,
+      "recall@k": 0.0,
+      "mrr": 0.0,
+      "ndcg@k": 0.0,
+      "latency": 4.291397333145142,
+      "retrieved_docs": [
+        "it-and-ites-sector-risk-report-2022.pdf",
+        "itpj-issue-7-ibfd-7.pdf",
+        "IT-industry-outlook-aug23.pdf",
+        "it-_ites_report_28_jan.pdf",
+        "IT-industry-outlook-aug23.pdf"
+      ],
+      "relevant_docs": [
+        "technology-sector-trends-and-priorities.pdf",
+        "Causes_and_Consequences_of_IT_Boom.pdf",
+        "mathur.pdf"
+      ]
+    },
+    "__avg__": {
+      "precision@k": 0.13333333333333333,
+      "recall@k": 0.2222222222222222,
+      "mrr": 0.27777777777777773,
+      "ndcg@k": 0.37697658452381916,
+      "latency": 5.356910149256389
+    }
+  },
+  "Pharma": {
+    "What are the major trends in the Indian pharmaceutical industry?": {
+      "precision@k": 0.2,
+      "recall@k": 0.5,
+      "mrr": 1.0,
+      "ndcg@k": 1.0,
+      "latency": 5.188121318817139,
+      "retrieved_docs": [
+        "Drugsand Pharmaceuticals Industry-India-Nov2024.pdf",
+        "pharma-india-2030-trends-and-talent.pdf",
+        "pharma-india-2030-trends-and-talent.pdf",
+        "pharma-india-2030-trends-and-talent.pdf",
+        "pharma-india-2030-trends-and-talent.pdf"
+      ],
+      "relevant_docs": [
+        "Drugsand Pharmaceuticals Industry-India-Nov2024.pdf",
+        "Indianpharmasector_currentstatus.pdf"
+      ]
+    },
+    "What is the size of Indian pharmaceutical market?": {
+      "precision@k": 0.4,
+      "recall@k": 1.0,
+      "mrr": 1.0,
+      "ndcg@k": 0.9197207891481876,
+      "latency": 5.373689413070679,
+      "retrieved_docs": [
+        "Drugsand Pharmaceuticals Industry-India-Nov2024.pdf",
+        "Indian ICT Sectorial System of Innovation (IISSI) Report_0.pdf",
+        "Drugsand Pharmaceuticals Industry-India-Nov2024.pdf",
+        "pharmaceutical-sector-report-2023.pdf",
+        "pharmaceutical-sector-report-2023.pdf"
+      ],
+      "relevant_docs": [
+        "Drugsand Pharmaceuticals Industry-India-Nov2024.pdf",
+        "doc2024822379301.pdf"
+      ]
+    },
+    "What are the challenges faced by Indian pharmaceutical companies?": {
+      "precision@k": 0.0,
+      "recall@k": 0.0,
+      "mrr": 0.0,
+      "ndcg@k": 0.0,
+      "latency": 4.799179792404175,
+      "retrieved_docs": [
+        "Drugsand Pharmaceuticals Industry-India-Nov2024.pdf",
+        "pharmaceutical-sector-report-2023.pdf",
+        "The-Indian-Pharmaceutical-Industry.pdf",
+        "The-Indian-Pharmaceutical-Industry.pdf",
+        "pharmaceutical-sector-report-2023.pdf"
+      ],
+      "relevant_docs": [
+        "doc2025518556901.pdf",
+        "Indianpharmasector_currentstatus.pdf"
+      ]
+    },
+    "__avg__": {
+      "precision@k": 0.20000000000000004,
+      "recall@k": 0.5,
+      "mrr": 0.6666666666666666,
+      "ndcg@k": 0.6399069297160626,
+      "latency": 5.120330174763997
+    }
+  }
+}

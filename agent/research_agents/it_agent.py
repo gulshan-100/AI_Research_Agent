@@ -20,9 +20,15 @@ class ITResearchAgent(BaseResearchAgent):
     def __init__(self):
         super().__init__()
         self.domain = "IT"
+        # Enhanced list of specialized sources for IT research
         self.specialized_sources = [
             "github.com", "stackoverflow.com", "arxiv.org", 
-            "ieee.org", "techcrunch.com", "wired.com"
+            "ieee.org", "techcrunch.com", "wired.com",
+            "infoworld.com", "zdnet.com", "cio.com",
+            "arstechnica.com", "thenewstack.io", "devops.com", 
+            "towardsdatascience.com", "kaggle.com", "gartner.com", 
+            "forrester.com", "mckinsey.com", "accenture.com",
+            "technologyreview.mit.edu"
         ]
     
     def plan_research(self, topic: str) -> ResearchPlan:
